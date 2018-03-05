@@ -6,7 +6,7 @@ from nltk import FreqDist
 from nltk import ConditionalFreqDist
 
 sents = brown.tagged_sents(tagset = 'universal')
-train_length = 2
+train_length = 100
 start = (u'<s>', u'START')
 end = (u'</s>', u'END')
 for sent in sents[0:train_length]:
@@ -46,22 +46,31 @@ def word_freq():
     return word_frequencies
 
 def tag_freq():
-    tag_frequencies = dict()
+    tag_frequencies = {}
     for sent in sents[0:train_length]:
         for token in sent:
             if token[0] not in tag_frequencies:
-                tag_frequencies[token[0]] = dict()
+                tag_frequencies[token[0]] = {}
                 tag_frequencies[token[0]][token[1]] = 1
             else:
-                tag_frequencies[token[0]][token[1]] += 1
+                if token[1] in tag_frequencies[token[0]]:
+                    tag_frequencies[token[0]][token[1]] += 1
+                else:
+                    tag_frequencies[token[0]][token[1]] = 1
     return tag_frequencies
 
 def emission_probability():
+    ep = {}
     tf = tag_freq()
     wf = word_freq()
-    print(tf)
-    print(wf)
-    
+    for sent in sents[0:train_length]:
+        for token in sent:
+            if token[0] not in ep:
+                ep[token[0]] = {}
+                ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
+            else:
+                ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
+    return ep
 
 emission_probability()
 
