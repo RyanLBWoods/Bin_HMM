@@ -1,41 +1,31 @@
 import nltk
-import numpy as np
-import matplotlib.pyplot as plt
 from nltk.corpus import brown
-from nltk import FreqDist
-from nltk import ConditionalFreqDist
 
-sents = brown.tagged_sents(tagset = 'universal')
-train_length = 2
+# Pre-processing training sets
+sents = brown.tagged_sents(tagset = 'universal')  # Get training set
+train_length = 2  # Define size of training set
+
 start = (u'<s>', u'START')
 end = (u'</s>', u'END')
-for sent in sents[0:train_length]:
+new_sents = []
+
+# Add start and end tag
+for sent in sents[0: train_length]:
     list.insert(sent, 0, start)
     list.append(sent, end)
-    # print len(sent)
-# print sents[0]
-# words = [w for (w, _) in sents[0]]
-# tags = [t for (_, t) in sents[0]]
-# print words
+    new_sents.append(sent)
 
-# print tags
-# pair = [(w, t) for w in words for t in tags]
-# i = ConditionalFreqDist(pair)
-# print i
-# print "conditions are", i.conditions()
-# print i / (1.0 * len(sents[0]))
-# print list(nltk.bigrams(tags))
-# print list(nltk.bigrams(words))
 """
 Calculate emission
 1. Get frequency for each word
 2. Get frequency of each word being tagged as XX
 3. Calculate emission
 """
-# Count words frequency
+
+
 def word_freq():
     word_frequencies = {}
-    for sent in sents[0:train_length]:
+    for sent in new_sents[0: train_length]:
         words = [w for (w, _) in sent]
         tags = [t for (_, t) in sent]
         for word in words:
@@ -45,9 +35,10 @@ def word_freq():
                 word_frequencies[word] = 1
     return word_frequencies
 
-def tag_freq():
+
+def tagged_freq():
     tag_frequencies = {}
-    for sent in sents[0:train_length]:
+    for sent in new_sents[0: train_length]:
         for token in sent:
             if token[0] not in tag_frequencies:
                 tag_frequencies[token[0]] = {}
@@ -59,11 +50,12 @@ def tag_freq():
                     tag_frequencies[token[0]][token[1]] = 1
     return tag_frequencies
 
+
 def emission_probability():
     ep = {}
-    tf = tag_freq()
+    tf = tagged_freq()
     wf = word_freq()
-    for sent in sents[0:train_length]:
+    for sent in new_sents[0:train_length]:
         for token in sent:
             if token[0] not in ep:
                 ep[token[0]] = {}
@@ -72,66 +64,64 @@ def emission_probability():
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
     return ep
 
+
+"""
+Calculate transition
+1. Get tag frequencies
+2. Get tag pairs
+3. Calculate frequencies of pairs
+4. Calculate transition
+"""
+
+
+def tags_freq():
+    tags_frequencies = {}
+    for sent in new_sents[0: train_length]:
+        tags = [t for (_, t) in sent]
+        for tag in tags:
+            if tag in tags_frequencies:
+                tags_frequencies[tag] += 1
+            else:
+                tags_frequencies[tag] = 1
+    return tags_frequencies
+
+
 def tag_pair():
     tag_pairs = []
-    for sent in sents[0: train_length]:
+    for sent in new_sents[0: train_length]:
         tags = [t for (_, t) in sent]
-        tp = list(nltk.bigrams(tags))
-        tag_pairs.append(tp)
-    print tag_pairs
+        pairs = list(nltk.bigrams(tags))
+        tag_pairs.extend(pairs)
     return tag_pairs
 
-tag_pair()
-# def word_tagged():
-#     wt = {}
-#     for sent in sents[0:train_length]:
-#         words = [w for (w, _) in sent]
-#         tags = [t for (_, t) in sent]
-#         for word in words:
-#             word_tag = word[word.rfind("/") + 1:len(word)]
-#             # word_not_tag = word[0:word.rfind("/")]
-#             # print word_tag
-#             # print word_not_tag
-#             # if word_tag in
-#
-# # word_tagged()
-#
-#
-#
-# # print e_p
+
+def pair_freq():
+    tp = tag_pair()
+    pf = {}
+    for token in tp:
+        if token[0] not in pf:
+            pf[token[0]] = {}
+            pf[token[0]][token[1]] = 1
+        else:
+            if token[1] in pf[token[0]]:
+                pf[token[0]][token[1]] += 1
+            else:
+                pf[token[0]][token[1]] = 1
+    return pf
+
 
 def transition_probability():
-    tp = {}
-    for sent in sents[0:train_length]:
-        list.insert(sent, 0, start)
-        list.append(sent, end)
-        words = [w for (w, _) in sent]
-        tags = [t for (_, t) in sent]
-        bi_tags = list(nltk.bigrams(tags))
-        print sent
-        for tag in tags:
-            print tag, FreqDist(tag)
-        # print FreqDist(u'START')
-        # print sent
-        # print u'START', FreqDist(u'START')
-        # for tag in tags:
-            # count = FreqDist(tag)
-            # print tag, count
-        # print words
-        # print bi_tags[0]
-        # for bi_tag in bi_tags:
-        #     print bi_tag
+    trans_pro = {}
+    tag_p = tag_pair()
+    tag_freq = tags_freq()
+    pairs_freq = pair_freq()
+    print pairs_freq
+    # for sent in new_sents[0:train_length]:
+    for p in tag_p:
+        if p not in trans_pro:
+            trans_pro[p] = pairs_freq[p[0]][p[1]] / (1.0 * tag_freq[p[0]])
+    print trans_pro
+    return trans_pro
 
-        # print sent
 
-# def emission_probability():
-#     ep = {}
-#     for sent in sents[0:train_length]:
-#         list.insert(sent, 0, start)
-#         list.append(sent, end)
-#         words = [w for (w, _) in sent]
-#         tags = [t for (_, t) in sent]
-#         for word in words:
-#             emission = FreqDist()
-
-# transition_probability()
+transition_probability()
