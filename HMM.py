@@ -6,7 +6,7 @@ from nltk import FreqDist
 from nltk import ConditionalFreqDist
 
 sents = brown.tagged_sents(tagset = 'universal')
-train_length = 100
+train_length = 2
 start = (u'<s>', u'START')
 end = (u'</s>', u'END')
 for sent in sents[0:train_length]:
@@ -72,25 +72,33 @@ def emission_probability():
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
     return ep
 
-emission_probability()
-
-def word_tagged():
-    wt = {}
-    for sent in sents[0:train_length]:
-        words = [w for (w, _) in sent]
+def tag_pair():
+    tag_pairs = []
+    for sent in sents[0: train_length]:
         tags = [t for (_, t) in sent]
-        for word in words:
-            word_tag = word[word.rfind("/") + 1:len(word)]
-            # word_not_tag = word[0:word.rfind("/")]
-            # print word_tag
-            # print word_not_tag
-            # if word_tag in
+        tp = list(nltk.bigrams(tags))
+        tag_pairs.append(tp)
+    print tag_pairs
+    return tag_pairs
 
-# word_tagged()
-
-
-
-# print e_p
+tag_pair()
+# def word_tagged():
+#     wt = {}
+#     for sent in sents[0:train_length]:
+#         words = [w for (w, _) in sent]
+#         tags = [t for (_, t) in sent]
+#         for word in words:
+#             word_tag = word[word.rfind("/") + 1:len(word)]
+#             # word_not_tag = word[0:word.rfind("/")]
+#             # print word_tag
+#             # print word_not_tag
+#             # if word_tag in
+#
+# # word_tagged()
+#
+#
+#
+# # print e_p
 
 def transition_probability():
     tp = {}
