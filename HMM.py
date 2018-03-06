@@ -1,19 +1,5 @@
 import nltk
-from nltk.corpus import brown
 
-# Pre-processing training sets
-sents = brown.tagged_sents(tagset='universal')  # Get training set
-# train_length = len(sents) / 2  # Define size of training set
-train_length = 100
-start = (u'<s>', u'START')
-end = (u'</s>', u'END')
-training_sents = []
-
-# Add start and end tag
-for sent in sents[0: train_length]:
-    list.insert(sent, 0, start)
-    list.append(sent, end)
-    training_sents.append(sent)
 """
 Calculate emission
 1. Get frequency for each word
