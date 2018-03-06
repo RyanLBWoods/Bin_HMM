@@ -12,7 +12,6 @@ def word_freq(train_sents):
     word_frequencies = {}
     for sent in train_sents:
         words = [w for (w, _) in sent]
-        tags = [t for (_, t) in sent]
         for word in words:
             if word in word_frequencies:
                 word_frequencies[word] = word_frequencies[word] + 1
@@ -55,6 +54,7 @@ def unk_emission(train_sents):
     unk = []
     unk_sent = []
     unk_sents = []
+    unk_em = {}
     for key in wf:
         if wf[key] == 1:
             unk.append(key)
@@ -66,11 +66,20 @@ def unk_emission(train_sents):
             else:
                 unk_sent.append(token)
         unk_sents.append(unk_sent)
-    unk_em = emission_probability(unk_sents)
+    unk_tf = tagged_freq(unk_sents)
+    unk_wf = word_freq(unk_sents)
+    for unsent in unk_sents:
+        for untk in unsent:
+            if untk[0] == 'UNK':
+                if untk[0] not in unk_em:
+                    unk_em[untk[0]] = {}
+                    unk_em[untk[0]][untk[1]] = unk_tf[untk[0]][untk[1]] / (1.0 * unk_wf[untk[0]])
+                else:
+                    unk_em[untk[0]][untk[1]] = unk_tf[untk[0]][untk[1]] / (1.0 * unk_wf[untk[0]])
     return unk_em
 
 
-def emission_with_UNK(train_sents):
+def emission_with_unk(train_sents):
     em = emission_probability(train_sents)
     unk_prob = unk_emission(train_sents)['UNK']
     em['UNK'] = unk_prob
