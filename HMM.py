@@ -3,7 +3,7 @@ from nltk.corpus import brown
 
 # Pre-processing training sets
 sents = brown.tagged_sents(tagset='universal')  # Get training set
-train_length = 2  # Define size of training set
+train_length = len(sents) / 2  # Define size of training set
 
 start = (u'<s>', u'START')
 end = (u'</s>', u'END')
@@ -62,6 +62,7 @@ def emission_probability():
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
             else:
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
+    print ep
     return ep
 
 
@@ -109,6 +110,7 @@ def pair_freq():
                 pf[token[0]][token[1]] = 1
     return pf
 
+
 # Calculate transition probability
 # Apply Laplace smoothing (k = 1)
 def transition_probability():
@@ -118,7 +120,6 @@ def transition_probability():
     tag_freq = tags_freq()
     tag_num = len(tag_freq)
     pairs_freq = pair_freq()
-    print pairs_freq
     # for sent in new_sents[0:train_length]:
     for p in tag_p:
         if p not in trans_pro:
@@ -126,5 +127,3 @@ def transition_probability():
     print trans_pro
     return trans_pro
 
-
-transition_probability()
