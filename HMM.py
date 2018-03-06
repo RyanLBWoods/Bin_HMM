@@ -3,17 +3,17 @@ from nltk.corpus import brown
 
 # Pre-processing training sets
 sents = brown.tagged_sents(tagset='universal')  # Get training set
-train_length = len(sents) / 2  # Define size of training set
-print 'train',train_length
+# train_length = len(sents) / 2  # Define size of training set
+train_length = 100
 start = (u'<s>', u'START')
 end = (u'</s>', u'END')
-train_sents = []
+training_sents = []
 
 # Add start and end tag
 for sent in sents[0: train_length]:
     list.insert(sent, 0, start)
     list.append(sent, end)
-    train_sents.append(sent)
+    training_sents.append(sent)
 # print len(train_sents)
 """
 Calculate emission
@@ -23,7 +23,7 @@ Calculate emission
 """
 
 
-def word_freq():
+def word_freq(train_sents):
     word_frequencies = {}
     for sent in train_sents:
         words = [w for (w, _) in sent]
@@ -33,13 +33,15 @@ def word_freq():
                 word_frequencies[word] = word_frequencies[word] + 1
             else:
                 word_frequencies[word] = 1
+    # print len(word_frequencies)
     return word_frequencies
 
 
-def tagged_freq():
+def tagged_freq(train_sents):
     tag_frequencies = {}
     for sent in train_sents:
         for token in sent:
+            # print token
             if token[0] not in tag_frequencies:
                 tag_frequencies[token[0]] = {}
                 tag_frequencies[token[0]][token[1]] = 1
@@ -51,10 +53,10 @@ def tagged_freq():
     return tag_frequencies
 
 
-def emission_probability():
+def emission_probability(train_sents):
     ep = {}
-    tf = tagged_freq()
-    wf = word_freq()
+    tf = tagged_freq(train_sents)
+    wf = word_freq(train_sents)
     for sent in train_sents:
         for token in sent:
             if token[0] not in ep:
@@ -62,9 +64,43 @@ def emission_probability():
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
             else:
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
-    # print len(ep)
+    # print ep
     return ep
 
+
+em = emission_probability(training_sents)
+
+
+def unk_emission(train_sents):
+    wf = word_freq(train_sents)
+    unk = []
+    unk_sent = []
+    unk_sents = []
+    for key in wf:
+        if wf[key] == 1:
+            unk.append(key)
+    # print 'unk: ', unk
+    # print len(unk)
+    for sent in train_sents:
+        for token in sent:
+            if token[0] in unk:
+                unknown = (u'UNK', token[1])
+                unk_sent.append(unknown)
+            else:
+                unk_sent.append(token)
+        # print 'UNK: ', unk_sent
+        unk_sents.append(unk_sent)
+    # print "unks: ", unk_sents
+    unk_em = emission_probability(unk_sents)
+    print unk_em['UNK']
+    return unk_em
+
+
+unk_prob = unk_emission(training_sents)['UNK']
+print(unk_prob)
+print len(em)
+em['UNK'] = unk_prob
+print len(em)
 
 """
 Calculate transition
@@ -75,7 +111,7 @@ Calculate transition
 """
 
 
-def tags_freq():
+def tags_freq(train_sents):
     tags_frequencies = {}
     for sent in train_sents:
         tags = [t for (_, t) in sent]
@@ -87,7 +123,7 @@ def tags_freq():
     return tags_frequencies
 
 
-def tag_pair():
+def tag_pair(train_sents):
     tag_pairs = []
     for sent in train_sents:
         tags = [t for (_, t) in sent]
@@ -96,8 +132,8 @@ def tag_pair():
     return tag_pairs
 
 
-def pair_freq():
-    tp = tag_pair()
+def pair_freq(train_sents):
+    tp = tag_pair(train_sents)
     pf = {}
     for token in tp:
         if token[0] not in pf:
@@ -113,20 +149,19 @@ def pair_freq():
 
 # Calculate transition probability
 # Apply Laplace smoothing (k = 1)
-def transition_probability():
+def transition_probability(train_sents):
     trans_pro = {}
     k = 1
-    tag_p = tag_pair()
-    tag_freq = tags_freq()
+    tag_p = tag_pair(train_sents)
+    tag_freq = tags_freq(train_sents)
     tag_num = len(tag_freq)
-    pairs_freq = pair_freq()
-    # for sent in new_sents[0:train_length]:
+    pairs_freq = pair_freq(train_sents)
     for p in tag_p:
         if p not in trans_pro:
             trans_pro[p] = (pairs_freq[p[0]][p[1]] + k) / (1.0 * (tag_freq[p[0]] + tag_num * k))
     # print len(trans_pro)
     return trans_pro
 
-
-# emission_probability()
-# transition_probability()
+# em = emission_probability(training_sents)
+# tr = transition_probability(training_sents)
+# print len(em), len(tr)
