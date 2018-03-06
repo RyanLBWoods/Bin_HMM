@@ -135,3 +135,13 @@ def transition_probability(train_sents):
         if p not in trans_pro:
             trans_pro[p] = (pairs_freq[p[0]][p[1]] + k) / (1.0 * (tag_freq[p[0]] + tag_num * k))
     return trans_pro
+
+
+# Get how many kinds of pairs
+def get_pair(train_sents):
+    tp = tag_pair(train_sents)
+    pairs = []
+    for token in tp:
+        if token not in pairs:
+            pairs.append(token)
+    return pairs
