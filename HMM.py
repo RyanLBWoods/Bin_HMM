@@ -62,8 +62,6 @@ def unk_emission(train_sents):
         if wf[key] == 1:
             unk.append(key)
     print "done unk words"
-    # print len(unk)
-    # exit(0)
     j = 0
     # k = 0
     print len(train_sents)
@@ -80,7 +78,6 @@ def unk_emission(train_sents):
         # k = 0
         unk_sents.append(unk_sent)
         unk_sent = []
-        print "j", j
     print "done change sent"
     unk_tf = tagged_freq(unk_sents)
     unk_wf = word_freq(unk_sents)
