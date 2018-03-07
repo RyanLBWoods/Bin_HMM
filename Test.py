@@ -1,17 +1,18 @@
 import HMM
 import nltk
 import time
+import collections
 from nltk.corpus import brown
 
 tick = time.time()
 print tick
 # Pre-processing training and testing sets
 sents = brown.tagged_sents(tagset='universal')  # Get training set
-train_length = len(sents) / 2  # Define size of training set
-# train_length = 2000
+# train_length = len(sents) / 2  # Define size of training set
+train_length = 5000
 training_sents = []
-test_length = len(sents) - train_length + 1
-test_length = len(sents) - 1
+# test_length = len(sents) - train_length + 1
+test_length = len(sents) - 2
 testing_sents = []
 # Add start and end tag
 start = (u'<s>', u'START')
@@ -22,8 +23,6 @@ for sent in sents[0: train_length]:
     training_sents.append(sent)
 print "train", time.time() - tick
 for sent in sents[test_length: len(sents)]:
-#     list.insert(sent, 0, start)
-#     list.append(sent, end)
     testing_sents.append(sent)
 # print testing_sents
 print "test", time.time() - tick
@@ -37,15 +36,18 @@ print "time", time.time() - tick
 print len(em)
 print tr
 
+
 def viterbi(emissions, transitions, test_sents):
-    vtb = {}
-    i = 0;
+    vtb = collections.OrderedDict()
+    vtbs = []
     from_list = []
     maxp = 0
     temp = ''
     pre_tag = ''
+    last = {}
     for sent in test_sents:
-        print sent
+        i = 0
+        print len(sent)
         for token in sent:
             if i == 0:
                 if token[0] in em:
@@ -82,7 +84,6 @@ def viterbi(emissions, transitions, test_sents):
                                         pre_tag = key2[0]
                                 else:
                                     continue
-                        print maxp
                         if token[0] not in vtb:
                             vtb[(token[0], pre_tag)] = {}
                             vtb[(token[0], pre_tag)][key] = maxp
@@ -97,13 +98,12 @@ def viterbi(emissions, transitions, test_sents):
                         for key2 in from_list:
                             if temp in vtb:
                                 if key2[0] in vtb[temp]:
-                                    observe = em[token[0]][key] * tr[key2] * vtb[temp][key2[0]]
+                                    observe = em['UNK'][key] * tr[key2] * vtb[temp][key2[0]]
                                     if observe > maxp:
                                         maxp = observe
                                         pre_tag = key2[0]
                                 else:
                                     continue
-                        # print maxp
                         if token[0] not in vtb:
                             vtb[(token[0], pre_tag)] = {}
                             vtb[(token[0], pre_tag)][key] = maxp
@@ -114,10 +114,20 @@ def viterbi(emissions, transitions, test_sents):
             temp_tag = vtb[temp]
             i += 1
             maxp = 0
-            if i == 3:
-                break
-    print vtb
-
+            if i == len(sent):
+                last = vtb[temp]
+                for tag in last:
+                    probability = last[tag] * tr[(tag, u'END')]
+                    if (u'END', tag) not in vtb:
+                        vtb[(u'END', tag)] = {}
+                        vtb[(u'END', tag)][tag] = probability
+                    else:
+                        vtb[(u'END', tag)][tag] = probability
+        vtbs.append(vtb)
+        vtb = collections.OrderedDict()
+    print vtbs[0]
+    print vtbs[1]
 
 
 viterbi(em, tr, testing_sents)
+print time.time() - tick
