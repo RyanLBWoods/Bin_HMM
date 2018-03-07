@@ -47,8 +47,6 @@ def emission_probability(train_sents):
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
             else:
                 ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
-        print i
-        i += 1
     return ep
 
 
@@ -62,20 +60,14 @@ def unk_emission(train_sents):
         if wf[key] == 1:
             unk.append(key)
     print "done unk words"
-    j = 0
-    # k = 0
     print len(train_sents)
     for sent in train_sents:
-        j += 1
         for token in sent:
-            # k += 1
             if token[0] in unk:
                 unknown = (u'UNK', token[1])
                 unk_sent.append(unknown)
             else:
                 unk_sent.append(token)
-            # print "k", k
-        # k = 0
         unk_sents.append(unk_sent)
         unk_sent = []
     print "done change sent"
