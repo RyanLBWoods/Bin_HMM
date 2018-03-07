@@ -1,11 +1,14 @@
 import HMM
 import nltk
+import time
 from nltk.corpus import brown
 
+tick = time.time()
+print tick
 # Pre-processing training and testing sets
 sents = brown.tagged_sents(tagset='universal')  # Get training set
-# train_length = len(sents) / 2  # Define size of training set
-train_length = 1000
+train_length = len(sents) / 2  # Define size of training set
+# train_length = 2000
 training_sents = []
 test_length = len(sents) - train_length + 1
 test_length = len(sents) - 1
@@ -17,18 +20,20 @@ for sent in sents[0: train_length]:
     list.insert(sent, 0, start)
     list.append(sent, end)
     training_sents.append(sent)
-
+print "train", time.time() - tick
 for sent in sents[test_length: len(sents)]:
 #     list.insert(sent, 0, start)
 #     list.append(sent, end)
     testing_sents.append(sent)
 # print testing_sents
-
+print "test", time.time() - tick
 pairs = HMM.get_pair(training_sents)
 # exit(0)
 # Get emissions and transitions
 em = HMM.emission_with_unk(training_sents)
+print "em time ", time.time()
 tr = HMM.transition_probability(training_sents)
+print "time", time.time() - tick
 print len(em)
 print tr
 
@@ -98,7 +103,7 @@ def viterbi(emissions, transitions, test_sents):
                                         pre_tag = key2[0]
                                 else:
                                     continue
-                        print maxp
+                        # print maxp
                         if token[0] not in vtb:
                             vtb[(token[0], pre_tag)] = {}
                             vtb[(token[0], pre_tag)][key] = maxp
@@ -106,11 +111,10 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[(token[0], pre_tag)][key] = maxp
             temp_token = token[0]
             temp = (temp_token, pre_tag)
-            # pre_tag
             temp_tag = vtb[temp]
             i += 1
             maxp = 0
-            if i == 2:
+            if i == 3:
                 break
     print vtb
 
