@@ -1,4 +1,6 @@
 import nltk
+import json
+from nltk.corpus import brown
 
 """
 Calculate emission
@@ -6,6 +8,17 @@ Calculate emission
 2. Get frequency of each word being tagged as XX
 3. Calculate emission
 """
+
+sents = brown.tagged_sents(tagset='universal')  # Get training set
+# train_length = len(sents) / 2  # Define size of training set
+train_length = 1000
+training_sents = []
+start = (u'<s>', u'START')
+end = (u'</s>', u'END')
+for sent in sents[0: train_length]:
+    list.insert(sent, 0, start)
+    list.append(sent, end)
+    training_sents.append(sent)
 
 
 def word_freq(train_sents):
@@ -141,15 +154,29 @@ def pair_freq(train_sents):
 def transition_probability(train_sents):
     trans_pro = {}
     k = 1
-    tag_p = tag_pair(train_sents)
+    # tag_p = tag_pair(train_sents)
     tag_freq = tags_freq(train_sents)
     tag_num = len(tag_freq)
     pairs_freq = pair_freq(train_sents)
-    for p in tag_p:
-        if p not in trans_pro:
-            trans_pro[p] = (pairs_freq[p[0]][p[1]] + k) / (1.0 * (tag_freq[p[0]] + tag_num * k))
+    tag_maxtrix = {}
+    # Build transition matrix
+    print len(tag_freq)
+    for tag1 in tag_freq:
+        for tag2 in tag_freq:
+            if (tag1, tag2) in pairs_freq:
+                tag_maxtrix[tag1, tag2] = pairs_freq[tag1, tag2]
+            else:
+                tag_maxtrix[tag1, tag2] = 0
+    print tag_maxtrix
+    print len(tag_maxtrix)
+    # exit(0)
+    for tag_pair in tag_maxtrix:
+        trans_pro[tag_pair] = (tag_maxtrix[tag_pair] + k) / (1.0 * (tag_freq[tag_pair[0]] + tag_num * k))
+    print trans_pro
     return trans_pro
 
+
+# transition_probability(training_sents)
 
 # Get how many kinds of pairs
 def get_pair(train_sents):
@@ -159,3 +186,21 @@ def get_pair(train_sents):
         if token not in pairs:
             pairs.append(token)
     return pairs
+
+
+def save_model():
+    emission_file = open('Emission.json', 'w')
+    em_model = emission_with_unk(training_sents)
+    em_obj = json.dumps(em_model)
+    emission_file.write(em_obj)
+    emission_file.close()
+
+    transition_file = open('Transition.json', 'w')
+    tr_model = transition_probability(training_sents)
+    tr_obj = json.dumps(str(tr_model))
+    transition_file.write(tr_obj)
+    transition_file.close()
+    print "Model saved."
+
+
+save_model()
