@@ -12,7 +12,7 @@ sents = brown.tagged_sents(tagset='universal')  # Get training set
 train_length = 1000
 training_sents = []
 # test_length = len(sents) - train_length + 1
-test_length = len(sents) - 1
+test_length = len(sents) - 2
 testing_sents = []
 # Add start and end tag
 start = (u'<s>', u'START')
@@ -33,7 +33,7 @@ em = HMM.emission_with_unk(training_sents)
 print "em time ", time.time()
 tr = HMM.transition_probability(training_sents)
 print "time", time.time() - tick
-print em['was']
+# print em['was']
 # print tr
 
 
@@ -65,7 +65,7 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][(u'START',key)] = probability
                         else:
                             vtb[i][(u'START',key)] = probability
-                print vtb
+                # print vtb
                 # exit(0)
             else:
                 if token[0] in em:
@@ -81,11 +81,11 @@ def viterbi(emissions, transitions, test_sents):
                                     if observe > maxp:
                                         maxp = observe
                                         temp_key2 = key2
-                            if i not in vtb:
-                                vtb[i] = {}
-                                vtb[i][temp_key2] = maxp
-                            else:
-                                vtb[i][temp_key2] = maxp
+                        if i not in vtb:
+                            vtb[i] = {}
+                            vtb[i][temp_key2] = maxp
+                        else:
+                            vtb[i][temp_key2] = maxp
                         # print vtb
                         # exit(0)
                 else:
@@ -101,11 +101,11 @@ def viterbi(emissions, transitions, test_sents):
                                     if observe >= maxp:
                                         maxp = observe
                                         temp_key2 = key2
-                            if i not in vtb:
-                                vtb[i] = {}
-                                vtb[i][temp_key2] = maxp
-                            else:
-                                vtb[i][temp_key2] = maxp
+                        if i not in vtb:
+                            vtb[i] = {}
+                            vtb[i][temp_key2] = maxp
+                        else:
+                            vtb[i][temp_key2] = maxp
             i += 1
             maxp = 0
             if i == len(sent):
@@ -118,9 +118,9 @@ def viterbi(emissions, transitions, test_sents):
                         vtb[i][(tag[1], u'END')] = probability
                     else:
                         vtb[i][(tag[1], u'END')] = probability
-            vtbs.append(vtb)
             from_list = []
-        print vtb
+        # print vtb
+        vtbs.append(vtb)
         vtb = collections.OrderedDict()
     return vtbs
 
@@ -129,17 +129,35 @@ def viterbi(emissions, transitions, test_sents):
 
 def tag_sent():
     vs = viterbi(em, tr, testing_sents)
-    tagged_sents = []
-    # temp_max = 0
-    # temp_max_tag = ''
-    # for v in vs:
-    #     for w in reversed(v):
-    #         for p_tag in v[w]:
-    #             if v[w][p_tag] > temp_max:
-    #                 temp_max = v[w][p_tag]
-    #                 temp_max_tag = p_tag
-    #
-    #                 exit(0)
+    max_prob = 0
+    tag = ''
+    test_tag = []
+    test_tags = []
+    for v in vs:
+        print v
+        j = next(reversed(v))
+        # print j
+        # while j > 0:
+        for tag_prob in v[j]:
+            # print tag_prob
+            if v[j][tag_prob] > max_prob:
+                max_prob = v[j][tag_prob]
+                tag = tag_prob[0]
+        list.insert(test_tag, 0, tag)
+        j = j - 1
+        while j > 0:
+            for probs in v[j]:
+                if probs[1] == tag:
+                    list.insert(test_tag, 0, probs[0])
+                    tag = probs[0]
+            j -= 1
+        # max_prob = 0
+        # print test_tag
+        test_tags.append(test_tag)
+        test_tag = []
+    print test_tags[0]
+    print test_tags[1]
+    return test_tags
 
 tag_sent()
 print time.time() - tick
