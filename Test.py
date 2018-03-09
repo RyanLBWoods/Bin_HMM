@@ -45,7 +45,7 @@ def viterbi(emissions, transitions, test_sents):
     temp_key2 = ''
     for sent in test_sents:
         i = 0
-        print "sent:", sent
+        # print "sent:", sent
         for token in sent:
             if i == 0:
                 if token[0] in em:
@@ -119,7 +119,7 @@ def viterbi(emissions, transitions, test_sents):
                     else:
                         vtb[i][(tag[1], u'END')] = probability
             from_list = []
-        # print vtb
+        print vtb
         vtbs.append(vtb)
         vtb = collections.OrderedDict()
     return vtbs
@@ -127,14 +127,14 @@ def viterbi(emissions, transitions, test_sents):
 
 # test = viterbi(em, tr, testing_sents)
 
-def tag_sent():
-    vs = viterbi(em, tr, testing_sents)
+def backpoint(test_sents):
+    vs = viterbi(em, tr, test_sents)
     max_prob = 0
     tag = ''
     test_tag = []
     test_tags = []
     for v in vs:
-        print v
+        # print v
         j = next(reversed(v))
         # print j
         # while j > 0:
@@ -149,15 +149,43 @@ def tag_sent():
             for probs in v[j]:
                 if probs[1] == tag:
                     list.insert(test_tag, 0, probs[0])
-                    tag = probs[0]
+            tag = test_tag[0]
             j -= 1
         # max_prob = 0
         # print test_tag
         test_tags.append(test_tag)
         test_tag = []
-    print test_tags[0]
-    print test_tags[1]
     return test_tags
 
-tag_sent()
+
+def accuracy(test_sents):
+    test_tags = backpoint(test_sents)
+    origin_tags = []
+    total_tag = 0
+    right_tag = 0
+    for sent in test_sents:
+        tags = [t for (_, t) in sent]
+        origin_tags.append(tags)
+        total_tag += len(tags)
+    # print test_tags
+    i = 0
+    print len(test_tags)
+    print "222:   ", len(origin_tags)
+    print len(test_tags[0]), test_tags[0]
+    print len(origin_tags[0]), origin_tags[0]
+    # exit(0)
+    while i < len(test_tags):
+        j = 0
+        while j < len(test_tags[i]):
+            if test_tags[i][j] == origin_tags[i][j]:
+                right_tag += 1
+            j += 1
+        i += 1
+    print right_tag
+    print total_tag
+    accuracy = right_tag / (1.0 * total_tag)
+    print accuracy
+
+
+accuracy(testing_sents)
 print time.time() - tick
