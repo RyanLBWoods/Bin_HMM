@@ -17,6 +17,7 @@ for key in tr:
 sents = brown.tagged_sents(tagset='universal')  # Get corpus
 training_sents = []
 test_length = int(0.1 * len(sents))
+# test_length = 1
 testing_sents = []
 for sent in sents[len(sents) - test_length: len(sents)]:
     testing_sents.append(sent)
@@ -35,7 +36,6 @@ def viterbi(emissions, transitions, test_sents):
     temp_key2 = ''
     for sent in test_sents:
         i = 0
-        # print "sent:", sent
         for token in sent:
             if i == 0:
                 if token[0] in emissions:
@@ -48,8 +48,8 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][(u'START', key)] = probability
                 else:
                     for key in emissions['UNK']:
-                        if (u'START', key) in transitions:
-                            probability = emissions['UNK'][key] * transitions[(u'START', key)]
+                        probability = emissions['UNK'][key] * transitions[(u'START', key)]
+                        # probability = 1 * transitions[(u'START', key)]
                         if i not in vtb:
                             vtb[i] = {}
                             vtb[i][(u'START', key)] = probability
@@ -58,6 +58,7 @@ def viterbi(emissions, transitions, test_sents):
             else:
                 if token[0] in emissions:
                     for key in emissions[token[0]]:
+                        # maxp = 0
                         for tk in pairs:
                             if tk[1] == key:
                                 temp_from = (tk[0], tk[1])
@@ -74,6 +75,8 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
+                        maxp = 0
+                        from_list = []
                 else:
                     for key in emissions['UNK']:
                         for tk in pairs:
@@ -84,7 +87,8 @@ def viterbi(emissions, transitions, test_sents):
                             for key2 in from_list:
                                 if key2[0] == t[1]:
                                     observe = emissions['UNK'][key] * transitions[key2] * vtb[i - 1][t]
-                                    if observe >= maxp:
+                                    # observe = 1 * transitions[key2] * vtb[i - 1][t]
+                                    if observe > maxp:
                                         maxp = observe
                                         temp_key2 = key2
                         if i not in vtb:
@@ -92,8 +96,9 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
+                        maxp = 0
+                        from_list = []
             i += 1
-            maxp = 0
             if i == len(sent):
                 last = vtb[i - 1]
                 for tag in last:
@@ -103,7 +108,6 @@ def viterbi(emissions, transitions, test_sents):
                         vtb[i][(tag[1], u'END')] = probability
                     else:
                         vtb[i][(tag[1], u'END')] = probability
-            from_list = []
         vtbs.append(vtb)
         vtb = collections.OrderedDict()
     return vtbs
@@ -115,16 +119,20 @@ def backpoint(test_sents):
     tag = ''
     test_tag = []
     test_tags = []
-    print "Guessing tags"
+    print "Choosing tags"
     for v in vs:
+        # print len(v)
+        print v
         j = next(reversed(v))
+        print "len: ", len(v)
+        print "j: ", j
         for tag_prob in v[j]:
-            # print tag_prob
             if v[j][tag_prob] > max_prob:
                 max_prob = v[j][tag_prob]
                 tag = tag_prob[0]
         list.insert(test_tag, 0, tag)
         j = j - 1
+        print "j after last: ", j
         while j > 0:
             for probs in v[j]:
                 if probs[1] == tag:
@@ -133,6 +141,7 @@ def backpoint(test_sents):
             j -= 1
         test_tags.append(test_tag)
         test_tag = []
+        max_prob = 0
     return test_tags
 
 
@@ -147,6 +156,8 @@ def calculate_accuracy(test_sents):
         total_tag += len(tags)
     i = 0
     while i < len(test_tags):
+        # print "T: ", test_tags[i]
+        # print "O: ", origin_tags[i]
         j = 0
         while j < len(test_tags[i]):
             if test_tags[i][j] == origin_tags[i][j]:
