@@ -1,17 +1,18 @@
 import nltk
 import json
+import time
 from nltk.corpus import brown
 
 
+# Process training set
 def process_training_set():
     sents = brown.tagged_sents(tagset='universal')  # Get training set
-    # train_length = int(0.1 * len(sents))  # Define size of training set
-    train_length = 1000
+    train_length = int(0.1 * len(sents))  # Define size of training set
     training_sents = []
+    # Add start and end of sentence tags
     start = (u'<s>', u'START')
     end = (u'</s>', u'END')
-    # for sent in sents[0: len(sents) - train_length]:
-    for sent in sents[0: train_length]:
+    for sent in sents[0: len(sents) - train_length]:
         list.insert(sent, 0, start)
         list.append(sent, end)
         training_sents.append(sent)
@@ -73,21 +74,26 @@ def unk_emission(train_sents):
     unk = []
     unk_tags_freq = {u'UNK': {}}
     unk_em = {u'UNK': {}}
+    # Collect word that appears only once
+    # Mark as UNK
     print "Collecting UNK..."
     for key in wf:
         if wf[key] == 1:
             unk.append(key)
+            # Collect tag frequencies for UNK
             for tag in tf[key]:
                 if tag not in unk_tags_freq[u'UNK']:
                     unk_tags_freq[u'UNK'][tag] = 1
                 else:
                     unk_tags_freq[u'UNK'][tag] += 1
+    # Calculate emission probability of UNK
     print "Calculating emission probability of UNK..."
     for unk_tag in unk_tags_freq[u'UNK']:
         unk_em[u'UNK'][unk_tag] = unk_tags_freq[u'UNK'][unk_tag] / (1.0 * len(unk))
     return unk_em
 
 
+# Add emission probability of UNK to emission dictionary
 def emission_with_unk(train_sents):
     em = emission_probability(train_sents)
     unk_prob = unk_emission(train_sents)[u'UNK']
@@ -165,21 +171,31 @@ def transition_probability(train_sents):
     return trans_pro
 
 
+# Save model to JSON file
 def save_model(training_sents):
-    print "Saving model"
-    emission_file = open('Emission.json', 'w')
+    # Calculate emission and transition probabilities
+    print "Training..."
     em_model = emission_with_unk(training_sents)
+    tr_model = transition_probability(training_sents)
+
+    # Write emission and transition probabilities to file
+    print "Saving model..."
+    emission_file = open('Emission.json', 'w')
+    # Convert to JSON
     em_obj = json.dumps(em_model)
     emission_file.write(em_obj)
     emission_file.close()
 
     transition_file = open('Transition.json', 'w')
-    tr_model = transition_probability(training_sents)
+    # Convert to JSON
     tr_obj = json.dumps(tr_model)
     transition_file.write(tr_obj)
     transition_file.close()
     print "Model saved."
 
 
+start_tick = time.time()
+print "Processing training set..."
 training_sents = process_training_set()
 save_model(training_sents)
+print "Time used: ", time.time() - start_tick
