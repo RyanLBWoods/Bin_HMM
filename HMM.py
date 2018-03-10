@@ -2,17 +2,21 @@ import nltk
 import json
 from nltk.corpus import brown
 
-sents = brown.tagged_sents(tagset='universal')  # Get training set
-train_length = int(0.1 * len(sents))  # Define size of training set
-# train_length = 1000
-training_sents = []
-start = (u'<s>', u'START')
-end = (u'</s>', u'END')
-for sent in sents[0: len(sents) - train_length]:
-# for sent in sents[0: train_length]:
-    list.insert(sent, 0, start)
-    list.append(sent, end)
-    training_sents.append(sent)
+
+def process_training_set():
+    sents = brown.tagged_sents(tagset='universal')  # Get training set
+    # train_length = int(0.1 * len(sents))  # Define size of training set
+    train_length = 1000
+    training_sents = []
+    start = (u'<s>', u'START')
+    end = (u'</s>', u'END')
+    # for sent in sents[0: len(sents) - train_length]:
+    for sent in sents[0: train_length]:
+        list.insert(sent, 0, start)
+        list.append(sent, end)
+        training_sents.append(sent)
+    return training_sents
+
 
 """
 Calculate emission
@@ -65,43 +69,29 @@ def emission_probability(train_sents):
 
 def unk_emission(train_sents):
     wf = word_freq(train_sents)
+    tf = tagged_freq(train_sents)
     unk = []
-    unk_sent = []
-    unk_sents = []
-    unk_em = {}
+    unk_tags_freq = {u'UNK': {}}
+    unk_em = {u'UNK': {}}
     print "Collecting UNK..."
     for key in wf:
         if wf[key] == 1:
             unk.append(key)
-    print "Changing training set with UNK..."
-    for sent in train_sents:
-        for token in sent:
-            if token[0] in unk:
-                unknown = (u'UNK', token[1])
-                unk_sent.append(unknown)
-            else:
-                unk_sent.append(token)
-        unk_sents.append(unk_sent)
-        unk_sent = []
-
-    unk_tf = tagged_freq(unk_sents)
-    unk_wf = word_freq(unk_sents)
-    print "Calculating emission probability of UNK..."
-    for unsent in unk_sents:
-        for untk in unsent:
-            if untk[0] == 'UNK':
-                if untk[0] not in unk_em:
-                    unk_em[untk[0]] = {}
-                    unk_em[untk[0]][untk[1]] = unk_tf[untk[0]][untk[1]] / (1.0 * unk_wf[untk[0]])
+            for tag in tf[key]:
+                if tag not in unk_tags_freq[u'UNK']:
+                    unk_tags_freq[u'UNK'][tag] = 1
                 else:
-                    unk_em[untk[0]][untk[1]] = unk_tf[untk[0]][untk[1]] / (1.0 * unk_wf[untk[0]])
+                    unk_tags_freq[u'UNK'][tag] += 1
+    print "Calculating emission probability of UNK..."
+    for unk_tag in unk_tags_freq[u'UNK']:
+        unk_em[u'UNK'][unk_tag] = unk_tags_freq[u'UNK'][unk_tag] / (1.0 * len(unk))
     return unk_em
 
 
 def emission_with_unk(train_sents):
     em = emission_probability(train_sents)
-    unk_prob = unk_emission(train_sents)['UNK']
-    em['UNK'] = unk_prob
+    unk_prob = unk_emission(train_sents)[u'UNK']
+    em[u'UNK'] = unk_prob
     return em
 
 
@@ -175,7 +165,7 @@ def transition_probability(train_sents):
     return trans_pro
 
 
-def save_model():
+def save_model(training_sents):
     print "Saving model"
     emission_file = open('Emission.json', 'w')
     em_model = emission_with_unk(training_sents)
@@ -191,4 +181,5 @@ def save_model():
     print "Model saved."
 
 
-save_model()
+training_sents = process_training_set()
+save_model(training_sents)
