@@ -125,7 +125,7 @@ def tags_freq(train_sents):
     return tags_frequencies
 
 
-def tag_pair(train_sents):
+def tag_pairs(train_sents):
     tag_pairs = []
     for sent in train_sents:
         tags = [t for (_, t) in sent]
@@ -135,7 +135,7 @@ def tag_pair(train_sents):
 
 
 def pair_freq(train_sents):
-    tp = tag_pair(train_sents)
+    tp = tag_pairs(train_sents)
     pf = {}
     for token in tp:
         if token[0] not in pf:
@@ -154,7 +154,6 @@ def pair_freq(train_sents):
 def transition_probability(train_sents):
     trans_pro = {}
     k = 1
-    # tag_p = tag_pair(train_sents)
     tag_freq = tags_freq(train_sents)
     tag_num = len(tag_freq)
     pairs_freq = pair_freq(train_sents)
@@ -167,25 +166,12 @@ def transition_probability(train_sents):
                 tag_maxtrix[tag1, tag2] = pairs_freq[tag1, tag2]
             else:
                 tag_maxtrix[tag1, tag2] = 0
-    print tag_maxtrix
-    print len(tag_maxtrix)
-    # exit(0)
+    # Fill in transitions
     for tag_pair in tag_maxtrix:
-        trans_pro[tag_pair] = (tag_maxtrix[tag_pair] + k) / (1.0 * (tag_freq[tag_pair[0]] + tag_num * k))
+        pair_str = str(tag_pair)
+        trans_pro[pair_str] = (tag_maxtrix[tag_pair] + k) / (1.0 * (tag_freq[tag_pair[0]] + tag_num * k))
     print trans_pro
     return trans_pro
-
-
-# transition_probability(training_sents)
-
-# Get how many kinds of pairs
-def get_pair(train_sents):
-    tp = tag_pair(train_sents)
-    pairs = []
-    for token in tp:
-        if token not in pairs:
-            pairs.append(token)
-    return pairs
 
 
 def save_model():
@@ -197,7 +183,7 @@ def save_model():
 
     transition_file = open('Transition.json', 'w')
     tr_model = transition_probability(training_sents)
-    tr_obj = json.dumps(str(tr_model))
+    tr_obj = json.dumps(tr_model)
     transition_file.write(tr_obj)
     transition_file.close()
     print "Model saved."
