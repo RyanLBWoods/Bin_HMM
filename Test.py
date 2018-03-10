@@ -1,40 +1,34 @@
 import HMM
 import nltk
 import time
+import json
+import string
 import collections
 from nltk.corpus import brown
 
-tick = time.time()
-print tick
-# Pre-processing training and testing sets
-sents = brown.tagged_sents(tagset='universal')  # Get training set
-# train_length = len(sents) / 2  # Define size of training set
-train_length = 1000
+# Read trained model from file
+emf = open('Emission.json', 'r')
+emission = json.load(emf)
+trf = open('Transition.json', 'r')
+tr = json.load(trf)
+transition = {}
+for key in tr:
+    t_key = key[3: len(key) - 2].split(',')
+    transition[(t_key[0][:-1], t_key[1][3:])] = tr[key]
+
+# Set testing sets
+sents = brown.tagged_sents(tagset='universal')  # Get corpus
 training_sents = []
-# test_length = len(sents) - train_length + 1
-test_length = len(sents) - 2
+test_length = 0.1 * len(sents)
+print test_length
+exit(0)
 testing_sents = []
-# Add start and end tag
-start = (u'<s>', u'START')
-end = (u'</s>', u'END')
-for sent in sents[0: train_length]:
-    list.insert(sent, 0, start)
-    list.append(sent, end)
-    training_sents.append(sent)
-print "train", time.time() - tick
 for sent in sents[test_length: len(sents)]:
     testing_sents.append(sent)
-# print testing_sents
-print "test", time.time() - tick
-pairs = HMM.get_pair(training_sents)
-# exit(0)
-# Get emissions and transitions
-em = HMM.emission_with_unk(training_sents)
-print "em time ", time.time()
-tr = HMM.transition_probability(training_sents)
-print "time", time.time() - tick
-# print em['was']
-# print tr
+# Collect pairs of tags
+pairs = []
+for token in transition:
+    pairs.append(token)
 
 
 def viterbi(emissions, transitions, test_sents):
@@ -48,36 +42,36 @@ def viterbi(emissions, transitions, test_sents):
         # print "sent:", sent
         for token in sent:
             if i == 0:
-                if token[0] in em:
-                    for key in em[token[0]]:
-                        probability = em[token[0]][key] * tr[(u'START', key)]
+                if token[0] in emissions:
+                    for key in emissions[token[0]]:
+                        probability = emissions[token[0]][key] * transitions[(u'START', key)]
                         if i not in vtb:
                             vtb[i] = {}
-                            vtb[i][(u'START',key)] = probability
+                            vtb[i][(u'START', key)] = probability
                         else:
-                            vtb[i][(u'START',key)] = probability
+                            vtb[i][(u'START', key)] = probability
                 else:
-                    for key in em['UNK']:
-                        if (u'START', key) in tr:
-                            probability = em['UNK'][key] * tr[(u'START', key)]
+                    for key in emissions['UNK']:
+                        if (u'START', key) in transitions:
+                            probability = emissions['UNK'][key] * transitions[(u'START', key)]
                         if i not in vtb:
                             vtb[i] = {}
-                            vtb[i][(u'START',key)] = probability
+                            vtb[i][(u'START', key)] = probability
                         else:
-                            vtb[i][(u'START',key)] = probability
+                            vtb[i][(u'START', key)] = probability
                 # print vtb
                 # exit(0)
             else:
-                if token[0] in em:
-                    for key in em[token[0]]:
+                if token[0] in emissions:
+                    for key in emissions[token[0]]:
                         for tk in pairs:
                             if tk[1] == key:
                                 temp_from = (tk[0], tk[1])
                                 from_list.append(temp_from)
-                        for t in vtb[i-1]:
+                        for t in vtb[i - 1]:
                             for key2 in from_list:
                                 if key2[0] == t[1]:
-                                    observe = em[token[0]][key] * tr[key2] * vtb[i-1][t]
+                                    observe = emissions[token[0]][key] * transitions[key2] * vtb[i - 1][t]
                                     if observe > maxp:
                                         maxp = observe
                                         temp_key2 = key2
@@ -89,7 +83,7 @@ def viterbi(emissions, transitions, test_sents):
                         # print vtb
                         # exit(0)
                 else:
-                    for key in em['UNK']:
+                    for key in emissions['UNK']:
                         for tk in pairs:
                             if tk[1] == key:
                                 temp_from = (tk[0], tk[1])
@@ -97,7 +91,7 @@ def viterbi(emissions, transitions, test_sents):
                         for t in vtb[i - 1]:
                             for key2 in from_list:
                                 if key2[0] == t[1]:
-                                    observe = em['UNK'][key] * tr[key2] * vtb[i - 1][t]
+                                    observe = emissions['UNK'][key] * transitions[key2] * vtb[i - 1][t]
                                     if observe >= maxp:
                                         maxp = observe
                                         temp_key2 = key2
@@ -112,14 +106,14 @@ def viterbi(emissions, transitions, test_sents):
                 # exit(0)
                 last = vtb[i - 1]
                 for tag in last:
-                    probability = last[tag] * tr[(tag[1], u'END')]
+                    probability = last[tag] * transitions[(tag[1], u'END')]
                     if i not in vtb:
                         vtb[i] = {}
                         vtb[i][(tag[1], u'END')] = probability
                     else:
                         vtb[i][(tag[1], u'END')] = probability
             from_list = []
-        print vtb
+        # print vtb
         vtbs.append(vtb)
         vtb = collections.OrderedDict()
     return vtbs
@@ -128,7 +122,7 @@ def viterbi(emissions, transitions, test_sents):
 # test = viterbi(em, tr, testing_sents)
 
 def backpoint(test_sents):
-    vs = viterbi(em, tr, test_sents)
+    vs = viterbi(emission, transition, test_sents)
     max_prob = 0
     tag = ''
     test_tag = []
@@ -158,7 +152,7 @@ def backpoint(test_sents):
     return test_tags
 
 
-def accuracy(test_sents):
+def calculate_accuracy(test_sents):
     test_tags = backpoint(test_sents)
     origin_tags = []
     total_tag = 0
@@ -173,7 +167,6 @@ def accuracy(test_sents):
     print "222:   ", len(origin_tags)
     print len(test_tags[0]), test_tags[0]
     print len(origin_tags[0]), origin_tags[0]
-    # exit(0)
     while i < len(test_tags):
         j = 0
         while j < len(test_tags[i]):
@@ -187,5 +180,4 @@ def accuracy(test_sents):
     print accuracy
 
 
-accuracy(testing_sents)
-print time.time() - tick
+calculate_accuracy(testing_sents)
