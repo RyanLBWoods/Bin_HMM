@@ -22,8 +22,9 @@ def process_training_set():
 """
 Calculate emission
 1. Get frequency for each word
-2. Get frequency of each word being tagged as XX
-3. Calculate emission
+2. Get frequency of each word being tagged as "tag"
+3. Get frequency of each tag
+3. Calculate emission probabilities (P(word | tag) = C(word, tag) / C(tag))
 """
 
 
@@ -54,17 +55,26 @@ def tagged_freq(train_sents):
     return tag_frequencies
 
 
+def tags_freq(train_sents):
+    tags_frequencies = {}
+    for sent in train_sents:
+        tags = [t for (_, t) in sent]
+        for tag in tags:
+            if tag in tags_frequencies:
+                tags_frequencies[tag] += 1
+            else:
+                tags_frequencies[tag] = 1
+    return tags_frequencies
+
+
 def emission_probability(train_sents):
     ep = {}
     tf = tagged_freq(train_sents)
-    wf = word_freq(train_sents)
-    for sent in train_sents:
-        for token in sent:
-            if token[0] not in ep:
-                ep[token[0]] = {}
-                ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
-            else:
-                ep[token[0]][token[1]] = tf[token[0]][token[1]] / (1.0 * wf[token[0]])
+    tag_count = tags_freq(train_sents)
+    for word in tf:
+        ep[word] ={}
+        for tag in tf[word]:
+            ep[word][tag] = tf[word][tag] / (1.0 * tag_count[tag])
     return ep
 
 
@@ -74,6 +84,7 @@ def unk_emission(train_sents):
     unk = []
     unk_tags_freq = {u'UNK': {}}
     unk_em = {u'UNK': {}}
+    tag_count = tags_freq(train_sents)
     # Collect word that appears only once
     # Mark as UNK
     print "Collecting UNK..."
@@ -106,20 +117,9 @@ Calculate transition
 1. Get tag frequencies
 2. Get tag pairs
 3. Calculate frequencies of pairs
-4. Calculate transition
+4. Calculate transition probabilities (Apply Laplace smoothing)
+P(to | from) = (C(from, to) + k )/ C(from) + V
 """
-
-
-def tags_freq(train_sents):
-    tags_frequencies = {}
-    for sent in train_sents:
-        tags = [t for (_, t) in sent]
-        for tag in tags:
-            if tag in tags_frequencies:
-                tags_frequencies[tag] += 1
-            else:
-                tags_frequencies[tag] = 1
-    return tags_frequencies
 
 
 def tag_pairs(train_sents):
@@ -159,8 +159,8 @@ def transition_probability(train_sents):
     print "Establishing transition probability matrix..."
     for tag1 in tag_freq:
         for tag2 in tag_freq:
-            if (tag1, tag2) in pairs_freq:
-                tag_maxtrix[tag1, tag2] = pairs_freq[tag1, tag2]
+            if tag1 in pairs_freq and tag2 in pairs_freq[tag1]:
+                tag_maxtrix[tag1, tag2] = pairs_freq[tag1][tag2]
             else:
                 tag_maxtrix[tag1, tag2] = 0
     # Fill in transitions
