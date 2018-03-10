@@ -2,23 +2,24 @@ import nltk
 import json
 from nltk.corpus import brown
 
+sents = brown.tagged_sents(tagset='universal')  # Get training set
+train_length = int(0.1 * len(sents))  # Define size of training set
+# train_length = 1000
+training_sents = []
+start = (u'<s>', u'START')
+end = (u'</s>', u'END')
+for sent in sents[0: len(sents) - train_length]:
+# for sent in sents[0: train_length]:
+    list.insert(sent, 0, start)
+    list.append(sent, end)
+    training_sents.append(sent)
+
 """
 Calculate emission
 1. Get frequency for each word
 2. Get frequency of each word being tagged as XX
 3. Calculate emission
 """
-
-sents = brown.tagged_sents(tagset='universal')  # Get training set
-# train_length = len(sents) / 2  # Define size of training set
-train_length = 1000
-training_sents = []
-start = (u'<s>', u'START')
-end = (u'</s>', u'END')
-for sent in sents[0: train_length]:
-    list.insert(sent, 0, start)
-    list.append(sent, end)
-    training_sents.append(sent)
 
 
 def word_freq(train_sents):
@@ -49,7 +50,6 @@ def tagged_freq(train_sents):
 
 
 def emission_probability(train_sents):
-    i = 0
     ep = {}
     tf = tagged_freq(train_sents)
     wf = word_freq(train_sents)
@@ -69,11 +69,11 @@ def unk_emission(train_sents):
     unk_sent = []
     unk_sents = []
     unk_em = {}
+    print "Collecting UNK..."
     for key in wf:
         if wf[key] == 1:
             unk.append(key)
-    print "done unk words"
-    print len(train_sents)
+    print "Changing training set with UNK..."
     for sent in train_sents:
         for token in sent:
             if token[0] in unk:
@@ -83,9 +83,10 @@ def unk_emission(train_sents):
                 unk_sent.append(token)
         unk_sents.append(unk_sent)
         unk_sent = []
-    print "done change sent"
+
     unk_tf = tagged_freq(unk_sents)
     unk_wf = word_freq(unk_sents)
+    print "Calculating emission probability of UNK..."
     for unsent in unk_sents:
         for untk in unsent:
             if untk[0] == 'UNK':
@@ -159,7 +160,7 @@ def transition_probability(train_sents):
     pairs_freq = pair_freq(train_sents)
     tag_maxtrix = {}
     # Build transition matrix
-    print len(tag_freq)
+    print "Establishing transition probability matrix..."
     for tag1 in tag_freq:
         for tag2 in tag_freq:
             if (tag1, tag2) in pairs_freq:
@@ -167,14 +168,15 @@ def transition_probability(train_sents):
             else:
                 tag_maxtrix[tag1, tag2] = 0
     # Fill in transitions
+    print "Calculating transition probabilities..."
     for tag_pair in tag_maxtrix:
         pair_str = str(tag_pair)
         trans_pro[pair_str] = (tag_maxtrix[tag_pair] + k) / (1.0 * (tag_freq[tag_pair[0]] + tag_num * k))
-    print trans_pro
     return trans_pro
 
 
 def save_model():
+    print "Saving model"
     emission_file = open('Emission.json', 'w')
     em_model = emission_with_unk(training_sents)
     em_obj = json.dumps(em_model)
