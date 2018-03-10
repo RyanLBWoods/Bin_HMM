@@ -1,12 +1,9 @@
-import HMM
-import nltk
-import time
 import json
-import string
 import collections
 from nltk.corpus import brown
 
 # Read trained model from file
+print "Reading model"
 emf = open('Emission.json', 'r')
 emission = json.load(emf)
 trf = open('Transition.json', 'r')
@@ -19,11 +16,9 @@ for key in tr:
 # Set testing sets
 sents = brown.tagged_sents(tagset='universal')  # Get corpus
 training_sents = []
-test_length = 0.1 * len(sents)
-print test_length
-exit(0)
+test_length = int(0.1 * len(sents))
 testing_sents = []
-for sent in sents[test_length: len(sents)]:
+for sent in sents[len(sents) - test_length: len(sents)]:
     testing_sents.append(sent)
 # Collect pairs of tags
 pairs = []
@@ -32,6 +27,7 @@ for token in transition:
 
 
 def viterbi(emissions, transitions, test_sents):
+    print "Running Viterbi algorithm"
     vtb = collections.OrderedDict()
     vtbs = []
     from_list = []
@@ -59,8 +55,6 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][(u'START', key)] = probability
                         else:
                             vtb[i][(u'START', key)] = probability
-                # print vtb
-                # exit(0)
             else:
                 if token[0] in emissions:
                     for key in emissions[token[0]]:
@@ -80,8 +74,6 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
-                        # print vtb
-                        # exit(0)
                 else:
                     for key in emissions['UNK']:
                         for tk in pairs:
@@ -103,7 +95,6 @@ def viterbi(emissions, transitions, test_sents):
             i += 1
             maxp = 0
             if i == len(sent):
-                # exit(0)
                 last = vtb[i - 1]
                 for tag in last:
                     probability = last[tag] * transitions[(tag[1], u'END')]
@@ -113,13 +104,10 @@ def viterbi(emissions, transitions, test_sents):
                     else:
                         vtb[i][(tag[1], u'END')] = probability
             from_list = []
-        # print vtb
         vtbs.append(vtb)
         vtb = collections.OrderedDict()
     return vtbs
 
-
-# test = viterbi(em, tr, testing_sents)
 
 def backpoint(test_sents):
     vs = viterbi(emission, transition, test_sents)
@@ -127,11 +115,9 @@ def backpoint(test_sents):
     tag = ''
     test_tag = []
     test_tags = []
+    print "Guessing tags"
     for v in vs:
-        # print v
         j = next(reversed(v))
-        # print j
-        # while j > 0:
         for tag_prob in v[j]:
             # print tag_prob
             if v[j][tag_prob] > max_prob:
@@ -145,8 +131,6 @@ def backpoint(test_sents):
                     list.insert(test_tag, 0, probs[0])
             tag = test_tag[0]
             j -= 1
-        # max_prob = 0
-        # print test_tag
         test_tags.append(test_tag)
         test_tag = []
     return test_tags
@@ -161,12 +145,7 @@ def calculate_accuracy(test_sents):
         tags = [t for (_, t) in sent]
         origin_tags.append(tags)
         total_tag += len(tags)
-    # print test_tags
     i = 0
-    print len(test_tags)
-    print "222:   ", len(origin_tags)
-    print len(test_tags[0]), test_tags[0]
-    print len(origin_tags[0]), origin_tags[0]
     while i < len(test_tags):
         j = 0
         while j < len(test_tags[i]):
@@ -174,10 +153,10 @@ def calculate_accuracy(test_sents):
                 right_tag += 1
             j += 1
         i += 1
-    print right_tag
-    print total_tag
+    print "Total words: ", total_tag
+    print "Right guessed: ", right_tag
     accuracy = right_tag / (1.0 * total_tag)
-    print accuracy
+    print "Accuracy: ", accuracy
 
 
 calculate_accuracy(testing_sents)
