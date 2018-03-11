@@ -1,6 +1,49 @@
 import json
+import sys
 import collections
-from nltk.corpus import brown, treebank
+from nltk.corpus import brown, reuters, inaugural, webtext, gutenberg
+
+if len(sys.argv) != 3:
+    print "Usage: python HMM.py <corpus_index> <tagset_index>"
+    print "Corpus:          Tagset: "
+    print "1. Brown           1. Default"
+    print "2. Reuters         2. Universal"
+    print "3. Inaugural"
+    print "4. Web text"
+    print "5. Gutenberg"
+    exit(0)
+else:
+    index = int(sys.argv[1])
+    tagset = int(sys.argv[2])
+    if index == 1 and tagset == 1:
+        sents = brown.tagged_sents()
+    elif index == 1 and tagset == 2:
+        sents = brown.tagged_sents(tagset='universal')
+    elif index == 2 and tagset == 1:
+        sents = reuters.tagged_sents()
+    elif index == 2 and tagset == 2:
+        sents = reuters.tagged_sents(tagset='universal')
+    elif index == 3 and tagset == 1:
+        sents = inaugural.tagged_sents()
+    elif index == 3 and tagset == 2:
+        sents = inaugural.tagged_sents(tagset='universal')
+    elif index == 4 and tagset == 1:
+        sents = webtext.tagged_sents()
+    elif index == 4 and tagset == 2:
+        sents = webtext.tagged_sent(tagset='universal')
+    elif index == 5 and tagset == 1:
+        sents = gutenberg.tagged_sents()
+    elif index == 5 and tagset == 2:
+        sents = gutenberg.tagged_sents(tagset='universal')
+    else:
+        print "Usage: python HMM.py <corpus_index> <tagset_index>"
+        print "Corpus:          Tagset: "
+        print "  1. Brown         1. Default"
+        print "  2. Reuters       2. Universal"
+        print "  3. Inaugural"
+        print "  4. Web text"
+        print "  5. Gutenberg"
+        exit(0)
 
 # Read trained model from file
 print "Reading model"
@@ -14,9 +57,6 @@ for key in tr:
     t_key = key[3: len(key) - 2].split('u')
     transition[(t_key[0][:-1-2], t_key[1][1:])] = tr[key]
 # Set testing sets
-sents = brown.tagged_sents(tagset='universal')  # Get corpus
-# sents = treebank.tagged_sents()  # Get corpus
-training_sents = []
 test_length = int(0.1 * len(sents))
 testing_sents = []
 for sent in sents[len(sents) - test_length: len(sents)]:
