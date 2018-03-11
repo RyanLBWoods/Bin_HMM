@@ -11,9 +11,8 @@ tr = json.load(trf)
 transition = {}
 # Process the key in transitions due to type
 for key in tr:
-    t_key = key[3: len(key) - 2].split(',')
-    transition[(t_key[0][:-1], t_key[1][3:])] = tr[key]
-
+    t_key = key[3: len(key) - 2].split('u')
+    transition[(t_key[0][:-1-2], t_key[1][1:])] = tr[key]
 # Set testing sets
 sents = brown.tagged_sents(tagset='universal')  # Get corpus
 # sents = treebank.tagged_sents()  # Get corpus
@@ -34,7 +33,6 @@ def viterbi(emissions, transitions, test_sents):
     print "Running Viterbi algorithm"
     vtb = collections.OrderedDict()
     vtbs = []
-    from_list = []
     maxp = -1
     temp_key2 = ''
     for sent in test_sents:
@@ -61,45 +59,31 @@ def viterbi(emissions, transitions, test_sents):
             else:
                 if token[0] in emissions:
                     for key in emissions[token[0]]:
-                        for tk in pairs:
-                            if tk[1] == key:
-                                temp_from = (tk[0], tk[1])
-                                from_list.append(temp_from)
                         for t in vtb[i - 1]:
-                            for key2 in from_list:
-                                if key2[0] == t[1]:
-                                    observe = emissions[token[0]][key] * transitions[key2] * vtb[i - 1][t]
-                                    if observe > maxp:
-                                        maxp = observe
-                                        temp_key2 = key2
+                            observe = emissions[token[0]][key] * transitions[(t[1], key)] * vtb[i - 1][t]
+                            if observe > maxp:
+                                maxp = observe
+                                temp_key2 = (t[1], key)
                         if i not in vtb:
                             vtb[i] = {}
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
                         maxp = -1
-                        from_list = []
                 else:
                     for key in emissions['UNK']:
-                        for tk in pairs:
-                            if tk[1] == key:
-                                temp_from = (tk[0], tk[1])
-                                from_list.append(temp_from)
                         for t in vtb[i - 1]:
-                            for key2 in from_list:
-                                if key2[0] == t[1]:
-                                    observe = emissions['UNK'][key] * transitions[key2] * vtb[i - 1][t]
+                                    observe = emissions['UNK'][key] * transitions[(t[1], key)] * vtb[i - 1][t]
                                     # observe = 1 * transitions[key2] * vtb[i - 1][t]
                                     if observe > maxp:
                                         maxp = observe
-                                        temp_key2 = key2
+                                        temp_key2 = (t[1], key)
                         if i not in vtb:
                             vtb[i] = {}
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
                         maxp = -1
-                        from_list = []
             i += 1
             if i == len(sent):
                 last = vtb[i - 1]
