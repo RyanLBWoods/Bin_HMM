@@ -1,6 +1,6 @@
 import json
 import collections
-from nltk.corpus import brown
+from nltk.corpus import brown, treebank
 
 # Read trained model from file
 print "Reading model"
@@ -9,30 +9,33 @@ emission = json.load(emf)
 trf = open('Transition.json', 'r')
 tr = json.load(trf)
 transition = {}
+# Process the key in transitions due to type
 for key in tr:
     t_key = key[3: len(key) - 2].split(',')
     transition[(t_key[0][:-1], t_key[1][3:])] = tr[key]
 
 # Set testing sets
 sents = brown.tagged_sents(tagset='universal')  # Get corpus
+# sents = treebank.tagged_sents()  # Get corpus
 training_sents = []
 test_length = int(0.1 * len(sents))
-# test_length = 1
 testing_sents = []
 for sent in sents[len(sents) - test_length: len(sents)]:
     testing_sents.append(sent)
+
 # Collect pairs of tags
 pairs = []
 for token in transition:
     pairs.append(token)
 
 
+# Apply Viterbi algorithm
 def viterbi(emissions, transitions, test_sents):
     print "Running Viterbi algorithm"
     vtb = collections.OrderedDict()
     vtbs = []
     from_list = []
-    maxp = 0
+    maxp = -1
     temp_key2 = ''
     for sent in test_sents:
         i = 0
@@ -58,7 +61,6 @@ def viterbi(emissions, transitions, test_sents):
             else:
                 if token[0] in emissions:
                     for key in emissions[token[0]]:
-                        # maxp = 0
                         for tk in pairs:
                             if tk[1] == key:
                                 temp_from = (tk[0], tk[1])
@@ -75,7 +77,7 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
-                        maxp = 0
+                        maxp = -1
                         from_list = []
                 else:
                     for key in emissions['UNK']:
@@ -96,7 +98,7 @@ def viterbi(emissions, transitions, test_sents):
                             vtb[i][temp_key2] = maxp
                         else:
                             vtb[i][temp_key2] = maxp
-                        maxp = 0
+                        maxp = -1
                         from_list = []
             i += 1
             if i == len(sent):
@@ -121,18 +123,13 @@ def backpoint(test_sents):
     test_tags = []
     print "Choosing tags"
     for v in vs:
-        # print len(v)
-        print v
         j = next(reversed(v))
-        print "len: ", len(v)
-        print "j: ", j
         for tag_prob in v[j]:
             if v[j][tag_prob] > max_prob:
                 max_prob = v[j][tag_prob]
                 tag = tag_prob[0]
         list.insert(test_tag, 0, tag)
         j = j - 1
-        print "j after last: ", j
         while j > 0:
             for probs in v[j]:
                 if probs[1] == tag:
@@ -156,8 +153,6 @@ def calculate_accuracy(test_sents):
         total_tag += len(tags)
     i = 0
     while i < len(test_tags):
-        # print "T: ", test_tags[i]
-        # print "O: ", origin_tags[i]
         j = 0
         while j < len(test_tags[i]):
             if test_tags[i][j] == origin_tags[i][j]:
