@@ -1,16 +1,15 @@
 import json
 import sys
 import collections
-from nltk.corpus import brown, reuters, inaugural, webtext, gutenberg
+from nltk.corpus import brown, treebank, masc_tagged, conll2000
 
 if len(sys.argv) != 3:
     print "Usage: python HMM.py <corpus_index> <tagset_index>"
     print "Corpus:          Tagset: "
-    print "1. Brown           1. Default"
-    print "2. Reuters         2. Universal"
-    print "3. Inaugural"
-    print "4. Web text"
-    print "5. Gutenberg"
+    print "1. brown           1. Default"
+    print "2. treebank        2. Universal"
+    print "3. masc_tagged"
+    print "4. conll2000"
     exit(0)
 else:
     index = int(sys.argv[1])
@@ -20,29 +19,24 @@ else:
     elif index == 1 and tagset == 2:
         sents = brown.tagged_sents(tagset='universal')
     elif index == 2 and tagset == 1:
-        sents = reuters.tagged_sents()
+        sents = treebank.tagged_sents()
     elif index == 2 and tagset == 2:
-        sents = reuters.tagged_sents(tagset='universal')
+        sents = treebank.tagged_sents(tagset='universal')
     elif index == 3 and tagset == 1:
-        sents = inaugural.tagged_sents()
+        sents = masc_tagged.tagged_sents()
     elif index == 3 and tagset == 2:
-        sents = inaugural.tagged_sents(tagset='universal')
+        sents = masc_tagged.tagged_sents(tagset='universal')
     elif index == 4 and tagset == 1:
-        sents = webtext.tagged_sents()
+        sents = conll2000.tagged_sents()
     elif index == 4 and tagset == 2:
-        sents = webtext.tagged_sent(tagset='universal')
-    elif index == 5 and tagset == 1:
-        sents = gutenberg.tagged_sents()
-    elif index == 5 and tagset == 2:
-        sents = gutenberg.tagged_sents(tagset='universal')
+        sents = conll2000.tagged_sents(tagset='universal')
     else:
         print "Usage: python HMM.py <corpus_index> <tagset_index>"
         print "Corpus:          Tagset: "
-        print "  1. Brown         1. Default"
-        print "  2. Reuters       2. Universal"
-        print "  3. Inaugural"
-        print "  4. Web text"
-        print "  5. Gutenberg"
+        print "1. brown           1. Default"
+        print "2. treebank        2. Universal"
+        print "3. masc_tagged"
+        print "4. conll2000"
         exit(0)
 
 # Read trained model from file
