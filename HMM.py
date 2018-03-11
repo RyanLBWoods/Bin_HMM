@@ -1,6 +1,7 @@
 import nltk
 import json
 import time
+import sys
 from nltk.corpus import brown, treebank
 
 
@@ -197,6 +198,7 @@ def save_model(training_sents):
 
 start_tick = time.time()
 print "Processing training set..."
+# print sys.argv
 training_sents = process_training_set()
 save_model(training_sents)
 print "Time used: ", time.time() - start_tick
