@@ -2,14 +2,55 @@ import nltk
 import json
 import time
 import sys
-from nltk.corpus import brown, treebank
+from nltk.corpus import brown, reuters, inaugural, webtext, gutenberg
+
+if len(sys.argv) != 3:
+    print "Usage: python HMM.py <corpus_index> <tagset_index>"
+    print "Corpus:          Tagset: "
+    print "1. Brown           1. Default"
+    print "2. Reuters         2. Universal"
+    print "3. Inaugural"
+    print "4. Web text"
+    print "5. Gutenberg"
+    exit(0)
+else:
+    index = int(sys.argv[1])
+    tagset = int(sys.argv[2])
+    if index == 1 and tagset == 1:
+        sents = brown.tagged_sents()
+    elif index == 1 and tagset == 2:
+        sents = brown.tagged_sents(tagset='universal')
+    elif index == 2 and tagset == 1:
+        sents = reuters.tagged_sents()
+    elif index == 2 and tagset == 2:
+        sents = reuters.tagged_sents(tagset='universal')
+    elif index == 3 and tagset == 1:
+        sents = inaugural.tagged_sents()
+    elif index == 3 and tagset == 2:
+        sents = inaugural.tagged_sents(tagset='universal')
+    elif index == 4 and tagset == 1:
+        sents = webtext.tagged_sents()
+    elif index == 4 and tagset == 2:
+        sents = webtext.tagged_sent(tagset='universal')
+    elif index == 5 and tagset == 1:
+        sents = gutenberg.tagged_sents()
+    elif index == 5 and tagset == 2:
+        sents = gutenberg.tagged_sents(tagset='universal')
+    else:
+        print "Usage: python HMM.py <corpus_index> <tagset_index>"
+        print "Corpus:          Tagset: "
+        print "  1. Brown         1. Default"
+        print "  2. Reuters       2. Universal"
+        print "  3. Inaugural"
+        print "  4. Web text"
+        print "  5. Gutenberg"
+        exit(0)
 
 
 # Process training set
 def process_training_set():
-    sents = brown.tagged_sents(tagset='universal')  # Get training set
-    # sents = treebank.tagged_sents()  # Get training set
-    train_length = int(0.1 * len(sents))  # Define size of training set
+    # Define size of training set
+    train_length = int(0.1 * len(sents))
     training_sents = []
     # Add start and end of sentence tags
     start = (u'<s>', u'START')
@@ -74,7 +115,7 @@ def emission_probability(train_sents):
     tf = tagged_freq(train_sents)
     tag_count = tags_freq(train_sents)
     for word in tf:
-        ep[word] ={}
+        ep[word] = {}
         for tag in tf[word]:
             ep[word][tag] = tf[word][tag] / (1.0 * tag_count[tag])
     return ep
@@ -176,7 +217,6 @@ def transition_probability(train_sents):
 # Save model to JSON file
 def save_model(training_sents):
     # Calculate emission and transition probabilities
-    print "Training..."
     em_model = emission_with_unk(training_sents)
     tr_model = transition_probability(training_sents)
 
@@ -184,13 +224,13 @@ def save_model(training_sents):
     print "Saving model..."
     emission_file = open('Emission.json', 'w')
     # Convert to JSON
-    em_obj = json.dumps(em_model, indent = 4)
+    em_obj = json.dumps(em_model, indent=4)
     emission_file.write(em_obj)
     emission_file.close()
 
     transition_file = open('Transition.json', 'w')
     # Convert to JSON
-    tr_obj = json.dumps(tr_model, indent = 4)
+    tr_obj = json.dumps(tr_model, indent=4)
     transition_file.write(tr_obj)
     transition_file.close()
     print "Model saved."
@@ -198,7 +238,6 @@ def save_model(training_sents):
 
 start_tick = time.time()
 print "Processing training set..."
-# print sys.argv
 training_sents = process_training_set()
 save_model(training_sents)
 print "Time used: ", time.time() - start_tick
