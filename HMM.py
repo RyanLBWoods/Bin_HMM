@@ -30,7 +30,7 @@ else:
     elif index == 4 and tagset == 1:
         sents = conll2000.tagged_sents()
     elif index == 4 and tagset == 2:
-        sents = conll2000.tagged_sent(tagset='universal')
+        sents = conll2000.tagged_sents(tagset='universal')
     else:
         print "Usage: python HMM.py <corpus_index> <tagset_index>"
         print "Corpus:          Tagset: "
