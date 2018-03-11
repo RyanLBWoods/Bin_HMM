@@ -1,12 +1,13 @@
 import nltk
 import json
 import time
-from nltk.corpus import brown
+from nltk.corpus import brown, treebank
 
 
 # Process training set
 def process_training_set():
     sents = brown.tagged_sents(tagset='universal')  # Get training set
+    # sents = treebank.tagged_sents()  # Get training set
     train_length = int(0.1 * len(sents))  # Define size of training set
     training_sents = []
     # Add start and end of sentence tags
@@ -182,13 +183,13 @@ def save_model(training_sents):
     print "Saving model..."
     emission_file = open('Emission.json', 'w')
     # Convert to JSON
-    em_obj = json.dumps(em_model)
+    em_obj = json.dumps(em_model, indent = 4)
     emission_file.write(em_obj)
     emission_file.close()
 
     transition_file = open('Transition.json', 'w')
     # Convert to JSON
-    tr_obj = json.dumps(tr_model)
+    tr_obj = json.dumps(tr_model, indent = 4)
     transition_file.write(tr_obj)
     transition_file.close()
     print "Model saved."
