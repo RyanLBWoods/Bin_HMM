@@ -1,0 +1,6 @@
+# Bin_HMM
+
+# Running
+Please run the program with Python2. Please run the training program first which is "HMM.py". The usage is "python HMM.py <Corpus_index> <tag_set_index>". Corpus index is in range of 1 ~ 4, 1 is brown corpus, 2 is treebank corpus, 3 is masc_tagged corpus and 4 is conll2000 corpus. The tag set index is either 1 for default tag set or 2 for universal tag set. The program will train the model according to the selection of corpus and tag set and generate two files, one is "Emission.json" that contains the emission probabilities, and the other is "Transition.json" that contains the transition probabilities.
+
+After training, the usage to run the testing program is "python Test.py <Corpus_index> <tag_set_index>". The indexes required are as same as indexes for the training program. If you train the model with universal tag set, use can test the model with other corpus, but please input 2 for tag set index no matter which corpus you are going to choose. On the contrast, if you train the model with the default tag set, you cannot test the model with other corpus as the default tag set of each corpus are not same. Therefore, please remember what corpus you used to train the model and do test with this corpus. In addition, the tag set index argument for testing should remain 1.
