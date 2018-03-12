@@ -111,7 +111,10 @@ def emission_probability(train_sents):
     for word in tf:
         ep[word] = {}
         for tag in tf[word]:
-            ep[word][tag] = tf[word][tag] / (1.0 * tag_count[tag])
+            if tag is not None:
+                ep[word][tag] = tf[word][tag] / (1.0 * tag_count[tag])
+            else:
+                ep[word][u'None'] = tf[word][tag] / (1.0 * tag_count[tag])
     return ep
 
 
@@ -137,7 +140,10 @@ def unk_emission(train_sents):
     # Calculate emission probability of UNK
     print "Calculating emission probability of UNK..."
     for unk_tag in unk_tags_freq[u'UNK']:
-        unk_em[u'UNK'][unk_tag] = unk_tags_freq[u'UNK'][unk_tag] / (1.0 * len(unk))
+        if unk_tag is not None:
+            unk_em[u'UNK'][unk_tag] = unk_tags_freq[u'UNK'][unk_tag] / (1.0 * len(unk))
+        else:
+            unk_em[u'UNK'][u'None'] = unk_tags_freq[u'UNK'][unk_tag] / (1.0 * len(unk))
     return unk_em
 
 
@@ -202,8 +208,16 @@ def transition_probability(train_sents):
                 tag_maxtrix[tag1, tag2] = 0
     # Fill in transitions
     print "Calculating transition probabilities..."
+    # print tag_maxtrix
     for tag_pair in tag_maxtrix:
-        pair_str = str(tag_pair)
+        if tag_pair[0] is None and tag_pair[1] is None:
+            pair_str = str((u'None', u'None'))
+        elif tag_pair[0] is None and tag_pair[1] is not None:
+            pair_str = str((u'None', tag_pair[1]))
+        elif tag_pair[0] is not None and tag_pair[1] is None:
+            pair_str = str((tag_pair[0], u'None'))
+        else:
+            pair_str = str(tag_pair)
         trans_pro[pair_str] = (tag_maxtrix[tag_pair] + k) / (1.0 * (tag_freq[tag_pair[0]] + tag_num * k))
     return trans_pro
 
