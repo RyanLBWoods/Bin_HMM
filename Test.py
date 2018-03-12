@@ -40,7 +40,7 @@ else:
         exit(0)
 
 # Read trained model from file
-print "Reading model"
+print "Loading model"
 emf = open('Emission.json', 'r')
 emission = json.load(emf)
 trf = open('Transition.json', 'r')
